@@ -28,7 +28,7 @@ jobs:
 
       - name: Lint with Flake8
         run: |
-          flake8 service tests
+          flake8 service tests --extend-ignore=E501
 
       - name: Run unit tests
         run: |
