@@ -1,19 +1,19 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: lint
+  name: cleanup
 spec:
   workspaces:
     - name: source
   steps:
-    - name: lint
-      image: python:3.9-slim
-      workingDir: $(workspaces.source.path)
+    - name: remove
+      image: alpine:3.19
       script: |
         #!/bin/sh
         set -eu
-        pip install -r requirements.txt
-        flake8 service tests --extend-ignore=E501
+        if [ -d "$(workspaces.source.path)" ]; then
+          find "$(workspaces.source.path)" -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+        fi
 ---
 apiVersion: tekton.dev/v1
 kind: Task
@@ -44,12 +44,9 @@ spec:
       type: string
   steps:
     - name: build
-      image: quay.io/buildah/stable:latest
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
       workingDir: $(workspaces.source.path)
-      securityContext:
-        privileged: true
       script: |
         #!/bin/sh
         set -eu
-        buildah bud --storage-driver=vfs -t "$(params.IMAGE)" .
-        buildah push "$(params.IMAGE)"
+        oc start-build ci-cd-final-project --from-dir=. --follow

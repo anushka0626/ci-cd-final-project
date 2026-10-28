@@ -1,0 +1,47 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-cd-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  params:
+    - name: IMAGE
+      type: string
+  tasks:
+    - name: cleanup
+      taskRef:
+        name: cleanup
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: lint
+      runAfter:
+        - cleanup
+      taskRef:
+        name: lint
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: unit-tests
+      runAfter:
+        - lint
+      taskRef:
+        name: unit-tests
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-image
+      runAfter:
+        - unit-tests
+      taskRef:
+        name: build-image
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+      workspaces:
+        - name: source
+          workspace: shared-workspace

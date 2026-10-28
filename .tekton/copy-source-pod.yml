@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: copy-source
+spec:
+  restartPolicy: Never
+  containers:
+    - name: copy
+      image: python:3.9-slim
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -e
+          cd /workspace/source
+          echo "PVC mounted successfully"
+          sleep 3600
+      volumeMounts:
+        - name: source
+          mountPath: /workspace/source
+  volumes:
+    - name: source
+      persistentVolumeClaim:
+        claimName: oc-pipelines
